@@ -2,6 +2,7 @@ import PyPDF2
 import re
 from dataclasses import dataclass
 from typing import List, Optional
+from io import BytesIO
 
 @dataclass
 class Owner:
@@ -9,17 +10,16 @@ class Owner:
     phone: str
 
 class PDFExtractor:
-    def __init__(self, pdf_path: str):
-        self.pdf_path = pdf_path
+    def __init__(self, pdf_file: BytesIO):
+        self.pdf_file = pdf_file
         self.text = ""
         self.owners: List[Owner] = []
 
     def extract_text(self):
         """Extract text from PDF file"""
-        with open(self.pdf_path, 'rb') as file:
-            reader = PyPDF2.PdfReader(file)
-            for page in reader.pages:
-                self.text += page.extract_text()
+        reader = PyPDF2.PdfReader(self.pdf_file)
+        for page in reader.pages:
+            self.text += page.extract_text()
         return self.text
 
     def parse_owners(self):
@@ -69,14 +69,16 @@ class PDFExtractor:
 
 def main():
     # Example usage
-    extractor = PDFExtractor("backend/exemplo.pdf")
-    owners = extractor.process()
-    
-    # Print results
-    for owner in owners:
-        print(f"Nome: {owner.owner_name}")
-        print(f"Celular: {owner.phone}")
-        print("-" * 50)
+    with open("backend/exemplo.pdf", "rb") as file:
+        pdf_file = BytesIO(file.read())
+        extractor = PDFExtractor(pdf_file)
+        owners = extractor.process()
+        
+        # Print results
+        for owner in owners:
+            print(f"Nome: {owner.owner_name}")
+            print(f"Celular: {owner.phone}")
+            print("-" * 50)
 
 if __name__ == "__main__":
     main() 

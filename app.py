@@ -7,6 +7,7 @@ import logging
 from typing import List, Dict
 from extract import PDFExtractor
 from pydantic import BaseModel
+from io import BytesIO
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -43,16 +44,12 @@ async def extract_pdf(file: UploadFile = File(...)):
     extraction_id = str(uuid.uuid4())
     
     try:
-        # Salva o arquivo temporariamente
-        temp_pdf_path = f"temp/{extraction_id}.pdf"
-        os.makedirs("temp", exist_ok=True)
-        
-        with open(temp_pdf_path, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
+        # Lê o conteúdo do arquivo em memória
+        content = await file.read()
+        pdf_file = BytesIO(content)
         
         # Processa o PDF
-        extractor = PDFExtractor(temp_pdf_path)
+        extractor = PDFExtractor(pdf_file)
         owners = extractor.process()
         
         # Converte para o formato de resposta
@@ -65,9 +62,6 @@ async def extract_pdf(file: UploadFile = File(...)):
         
         # Salva os resultados
         extractions[extraction_id] = results
-        
-        # Remove o arquivo temporário
-        os.remove(temp_pdf_path)
         
         return {
             "extraction_id": extraction_id,
