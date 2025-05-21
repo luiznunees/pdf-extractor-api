@@ -3,10 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import os
 import uuid
+import logging
 from typing import List, Dict
-from services.logger import app_logger
 from extract import PDFExtractor
 from pydantic import BaseModel
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="PDF Extractor API")
 
@@ -72,7 +76,7 @@ async def extract_pdf(file: UploadFile = File(...)):
         }
         
     except Exception as e:
-        app_logger.error(f"Erro ao processar PDF: {str(e)}", exc_info=True)
+        logger.error(f"Erro ao processar PDF: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/results/{extraction_id}", response_model=List[OwnerResponse])
@@ -94,5 +98,5 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    app_logger.info("Iniciando servidor da API de extração de PDF")
+    logger.info("Iniciando servidor da API de extração de PDF")
     uvicorn.run(app, host="0.0.0.0", port=8000) 
